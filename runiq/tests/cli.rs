@@ -201,7 +201,7 @@ fn run_stdin_outfile_count(test: &Test) -> TestResult {
     let outfile_path = outfile.path().to_str().unwrap();
 
     Command::cargo_bin(PRG)?
-        .write_stdin(test.input)
+        .write_stdin(fs::read_to_string(test.input)?)
         .args(["-c", "-o", outfile_path])
         .assert()
         .success()
