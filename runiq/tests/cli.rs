@@ -1,6 +1,5 @@
 use std::{error::Error, fs};
 use assert_cmd::Command;
-use predicates::{Predicate, prelude::*};
 use rand::{Rng, distributions::Alphanumeric};
 use tempfile::NamedTempFile;
 

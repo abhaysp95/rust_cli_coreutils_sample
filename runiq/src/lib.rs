@@ -50,6 +50,18 @@ pub fn run(cfg: Config) -> MyResult<()> {
     Ok(())
 }
 
+#[allow(unused_variables, dead_code)]
+fn write_result2(
+    write_to: Box<dyn Write>,
+    uniq_res: &Vec<CountLines>,
+    count: bool,
+) -> MyResult<()> {
+
+    //...
+
+    Ok(())
+}
+
 fn write_result(
     write_to: impl Write,
     uniq_res: &Vec<CountLines>,
@@ -119,6 +131,53 @@ fn read_file(mut buf_read: impl BufRead) -> MyResult<Vec<CountLines>> {
     }
 
     Ok(uniq_data)
+}
+
+// another approach (just for little learning purpose)
+pub fn run1(cfg: Config) -> MyResult<()> {
+    let mut file = open(&cfg.in_file).map_err(|e| format!("{}: {}", cfg.in_file, e))?;
+
+    let mut out_file: Box<dyn Write> = match &cfg.out_file {
+        Some(out_name) => Box::new(File::create(out_name)?),
+        _ => Box::new(stdout()),
+    };
+
+    /* let uniq_res = read_file(file)?;
+    write_result(out_file, &uniq_res, cfg.count)?; */
+
+    let mut print = |count: u64, text: &str| -> MyResult<()> {
+        if count > 0 {
+            if cfg.count {
+                write!(out_file, "{:>7} {}", count, text)?;
+            } else {
+                write!(out_file, "{}", text)?;
+            }
+        };
+        Ok(())
+    };
+
+    let mut line = String::new();
+    let mut previous = String::new();
+    let mut count: u64 = 0;
+    loop {
+        let bytes = file.read_line(&mut line)?;
+        if bytes == 0 {
+            break;
+        }
+
+        if line.trim_end() != previous.trim_end() {
+            print(count, &previous)?;
+            previous = line.clone();
+            count = 0;
+        }
+
+        count += 1;
+        line.clear();
+    }
+
+    print(count, &previous)?;
+
+    Ok(())
 }
 
 /* fn read_file(mut buf_read: impl BufRead) -> MyResult<()> {
