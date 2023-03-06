@@ -52,6 +52,33 @@ pub fn run(cfg: Config) -> MyResult<()> {
         .collect::<Result<Vec<_>, _>>()?;
 
     for path in cfg.paths {
+        for entry in WalkDir::new(&path) {
+            match entry {
+                Err(e) => eprintln!("{}", e),
+                Ok(entry) => {
+                    let ft = entry.file_type();
+                    for ftype in &cfg.ftype {
+                        match ftype {
+                            FindType::File => {
+                                if ft.is_file() {
+                                    println!("{}", entry.path().display());
+                                }
+                            },
+                            FindType::Dir => {
+                                if ft.is_dir() {
+                                    println!("{}", entry.path().display());
+                                }
+                            },
+                            FindType::Link => {
+                                if ft.is_symlink() {
+                                    println!("{}", entry.path().display());
+                                }
+                            },
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Ok(())
