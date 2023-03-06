@@ -2,6 +2,7 @@ use std::{error::Error, fs::DirEntry};
 
 use clap::{command, Parser, ValueEnum};
 use regex::Regex;
+use walkdir::WalkDir;
 
 // TODO: switch to Builder pattern (possibly, derive pattern not working)
 
@@ -51,6 +52,8 @@ pub fn run(cfg: Config) -> MyResult<()> {
         .map(|name| Regex::new(&name).map_err(|_| format!("Invalid --name \"{}\"", name)))
         .collect::<Result<Vec<_>, _>>()?;
 
+    let mut find_res: Vec<String> = vec![];
+
     for path in cfg.paths {
         for entry in WalkDir::new(&path) {
             match entry {
@@ -61,22 +64,30 @@ pub fn run(cfg: Config) -> MyResult<()> {
                         match ftype {
                             FindType::File => {
                                 if ft.is_file() {
-                                    println!("{}", entry.path().display());
+                                    find_res.push(entry.path().display().to_string());
                                 }
                             },
                             FindType::Dir => {
                                 if ft.is_dir() {
-                                    println!("{}", entry.path().display());
+                                    find_res.push(entry.path().display().to_string());
                                 }
                             },
                             FindType::Link => {
                                 if ft.is_symlink() {
-                                    println!("{}", entry.path().display());
+                                    find_res.push(entry.path().display().to_string());
                                 }
                             },
                         }
                     }
                 }
+            }
+        }
+    }
+
+    for fr in &find_res {
+        for np in &names {
+            if np.is_match(&fr) {
+                println!("{}", fr);
             }
         }
     }
