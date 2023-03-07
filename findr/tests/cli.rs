@@ -199,7 +199,7 @@ fn type_l() -> TestResult {
 #[test]
 fn type_f_l() -> TestResult {
     run(
-        &["tests/inputs", "-t", "l", "f"],
+        &["tests/inputs", "-t", "l", "-t", "f"],
         "tests/expected/type_f_l.txt",
     )
 }
