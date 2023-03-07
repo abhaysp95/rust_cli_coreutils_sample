@@ -1,21 +1,21 @@
 use std::{error::Error, path::PathBuf};
 
-use clap::{arg, value_parser, Arg, ArgAction, Command};
+use clap::{arg, Arg, ArgAction, Command};
 use regex::Regex;
 use walkdir::WalkDir;
 
 // TODO: switch to Builder pattern (possibly, derive pattern not working)
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum FindType {
+pub enum FindType {
     Dir,
     File,
     Link,
 }
 
 #[derive(Debug)]
-struct Config {
-    paths: Vec<String>,
+pub struct Config {
+    paths: Vec<PathBuf>,
     ftypes: Vec<FindType>,
     names: Vec<Regex>,
 }
@@ -29,8 +29,8 @@ pub fn parse_args() -> MyResult<Config> {
         .about("simple clone of find in rust")
         .arg(
             Arg::new("paths")
-                .required(true)
-                .value_parser(value_parser!(PathBuf))
+                .default_value(".")
+                // .value_parser(value_parser!(PathBuf))
                 .action(ArgAction::Append)
                 .help("Provide paths to search"),
         )
@@ -51,8 +51,8 @@ pub fn parse_args() -> MyResult<Config> {
     let paths = matches
         .get_many::<String>("paths")
         .unwrap_or_default()
-        .map(|path| path.clone()) // why do this ?
-        .collect::<Vec<String>>();
+        .map(|path| PathBuf::from(path)) // why do this ?
+        .collect::<Vec<PathBuf>>();
 
     let ftypes = matches
         .get_many::<String>("type")
@@ -62,6 +62,7 @@ pub fn parse_args() -> MyResult<Config> {
             "d" => FindType::Dir,
             "f" => FindType::File,
             "l" => FindType::Link,
+            _ => unreachable!(),
         })
         .collect::<Vec<FindType>>();
 
@@ -114,7 +115,7 @@ pub fn run(cfg: Config) -> MyResult<()> {
     }
 
     for fr in &find_res {
-        for np in &names {
+        for np in &cfg.names {
             if np.is_match(&fr) {
                 println!("{}", fr);
             }
