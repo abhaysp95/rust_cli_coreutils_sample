@@ -82,21 +82,19 @@ pub fn run(cfg: Config) -> MyResult<()> {
             match entry {
                 Err(e) => eprintln!("{}", e),
                 Ok(entry) => {
-                    if cfg.ftypes.is_empty()
+                    if (cfg.ftypes.is_empty()
                         || cfg.ftypes.iter().any(|ft| match ft {
                             FindType::File => entry.file_type().is_file(),
                             FindType::Dir => entry.file_type().is_dir(),
                             FindType::Link => entry.file_type().is_symlink(),
-                        })
-                    {
-                        if cfg.names.is_empty()
+                        }))
+                        && (cfg.names.is_empty()
                             || cfg
                                 .names
                                 .iter()
-                                .any(|name| name.is_match(entry.file_name().to_str().unwrap()))
-                        {
-                            println!("{}", entry.path().display());
-                        }
+                                .any(|name| name.is_match(entry.file_name().to_str().unwrap())))
+                    {
+                        println!("{}", entry.path().display());
                     }
                 }
             }
