@@ -16,6 +16,7 @@ find "$IN_DIR/a" > "$OUT_DIR/path_a.txt"
 find "$IN_DIR/a/b" > "$OUT_DIR/path_a_b.txt"
 find "$IN_DIR/d" > "$OUT_DIR/path_d.txt"
 find "$IN_DIR/a/b" "$IN_DIR/d" > "$OUT_DIR/path_a_b_d.txt"
+find "$IN_DIR/g.csv" > "$OUT_DIR/path_g.txt"
 
 find "$IN_DIR" -type f > "$OUT_DIR/type_f.txt"
 find "$IN_DIR/a" -type f > "$OUT_DIR/type_f_path_a.txt"
