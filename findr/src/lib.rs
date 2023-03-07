@@ -2,7 +2,7 @@ use std::{error::Error, path::PathBuf};
 
 use clap::{arg, Arg, ArgAction, Command};
 use regex::Regex;
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FindType {
