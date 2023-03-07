@@ -42,6 +42,14 @@ fn dies_bad_type() -> TestResult {
 
 #[allow(dead_code)]
 fn dies_bad_name() -> TestResult {
+    let expected = "regex parse error";
+
+    Command::cargo_bin(&PRG)?
+        .args(&["*.csv"])
+        .assert()
+        .failure()
+        .stderr(predicates::str::contains(expected));
+
     Ok(())
 }
 
