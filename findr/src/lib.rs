@@ -131,3 +131,45 @@ fn test_regex() {
     // rest, I'm trusting regex package here and will add tests if something I need needed to be
     // tested for my understanding
 }
+
+// -----------------------------------------------------------
+
+/* for path in cfg.paths {
+    for entry in WalkDir::new(&path) {
+        match entry {
+            Err(e) => eprintln!("{}", e),
+            Ok(entry) => {
+                if (cfg.ftypes.is_empty()
+                    || cfg.ftypes.iter().any(|ft| match ft {
+                        FindType::File => entry.file_type().is_file(),
+                        FindType::Dir => entry.file_type().is_dir(),
+                        FindType::Link => entry.file_type().is_symlink(),
+                    }))
+                    && (cfg.names.is_empty()
+                        || cfg
+                            .names
+                            .iter()
+                            .any(|name| name.is_match(entry.file_name().to_str().unwrap())))
+                {
+                    println!("{}", entry.path().display());
+                }
+            }
+        }
+    }
+} */
+
+/* let entries = WalkDir::new(&path)
+    .into_iter()  // iterators are lazy and do nothing unless consumed
+    .filter_map(|entry| match entry {
+        Err(e) => {
+            println!("{}", e);
+            None
+        }
+        Ok(entry) => Some(entry),
+    })
+    .filter(type_filter)
+    .filter(name_filter)
+    .map(|entry| entry.path().display().to_string())
+    .collect::<Vec<String>>();
+
+println!("{}", entries.join("\n")); */
