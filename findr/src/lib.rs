@@ -94,22 +94,31 @@ pub fn run(cfg: Config) -> MyResult<()> {
                 .any(|name| name.is_match(&entry.file_name().to_string_lossy()));
     };
 
-    for path in &cfg.paths {
-        let entries = WalkDir::new(&path)
-            .into_iter()
-            .filter_map(|entry| match entry {
-                Err(e) => {
-                    println!("{}", e);
-                    None
-                }
-                Ok(entry) => Some(entry),
-            })
-            .filter(type_filter)
-            .filter(name_filter)
-            .map(|entry| entry.path().display().to_string())
-            .collect::<Vec<String>>();
+    const BUFSIZE: usize = 64;  // works best for me as I tested in unconventional way
+    let mut buffer: Vec<String> = vec![];
+    buffer.reserve(BUFSIZE);
 
-        println!("{}", entries.join("\n"));
+    let mut count = 0;
+    for path in cfg.paths {
+        for entry in WalkDir::new(&path) {
+            match entry {
+                Err(e) => eprintln!("{}", e),
+                Ok(entry) => {
+                    if name_filter(&entry) && type_filter(&entry) {
+                        buffer.push(entry.path().display().to_string());
+                    }
+                    count += 1;
+                    if count == BUFSIZE {
+                        println!("{}", buffer.join("\n"));
+                        buffer.clear();
+                        count = 0;
+                    }
+                }
+            }
+        }
+    }
+    if !buffer.is_empty() {
+        println!("{}", buffer.join("\n"));
     }
 
     Ok(())
