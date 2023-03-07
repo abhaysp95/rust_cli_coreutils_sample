@@ -11,3 +11,4 @@ clap = { version = "4.1.8", features = ["derive"] }
 predicates = "2.1.5"
 rand = "0.8.5"
 regex = "1.7.1"
+walkdir = "2.3.2"
