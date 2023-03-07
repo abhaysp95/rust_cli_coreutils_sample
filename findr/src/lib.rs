@@ -4,8 +4,6 @@ use clap::{arg, Arg, ArgAction, Command};
 use regex::Regex;
 use walkdir::WalkDir;
 
-// TODO: switch to Builder pattern (possibly, derive pattern not working)
-
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum FindType {
     Dir,
@@ -38,7 +36,6 @@ pub fn parse_args() -> MyResult<Config> {
             arg!(-t --type <TYPE> "match type of the file")
                 .action(ArgAction::Append)
                 .value_parser(["d", "f", "l"])
-                .default_value("f")
                 .help("Types of file to search"),
         )
         .arg(
@@ -80,44 +77,21 @@ pub fn parse_args() -> MyResult<Config> {
 }
 
 pub fn run(cfg: Config) -> MyResult<()> {
-    dbg!(&cfg); // will show everything escaped (but actually it is not)
-
-    let mut find_res: Vec<String> = vec![];
-
     for path in cfg.paths {
         for entry in WalkDir::new(&path) {
             match entry {
                 Err(e) => eprintln!("{}", e),
                 Ok(entry) => {
-                    let ft = entry.file_type();
-                    for ftype in &cfg.ftypes {
-                        match ftype {
-                            FindType::File => {
-                                if ft.is_file() {
-                                    find_res.push(entry.path().display().to_string());
-                                }
-                            }
-                            FindType::Dir => {
-                                if ft.is_dir() {
-                                    find_res.push(entry.path().display().to_string());
-                                }
-                            }
-                            FindType::Link => {
-                                if ft.is_symlink() {
-                                    find_res.push(entry.path().display().to_string());
-                                }
-                            }
+                    if cfg.ftypes.is_empty() || cfg.ftypes.iter().any(|ft| match ft {
+                        FindType::File => entry.file_type().is_file(),
+                        FindType::Dir => entry.file_type().is_dir(),
+                        FindType::Link => entry.file_type().is_symlink(),
+                    }) {
+                        if cfg.names.is_empty() || cfg.names.iter().any(|name| name.is_match(entry.file_name().to_str().unwrap())) {
+                            println!("{}", entry.path().display());
                         }
                     }
                 }
-            }
-        }
-    }
-
-    for fr in &find_res {
-        for np in &cfg.names {
-            if np.is_match(&fr) {
-                println!("{}", fr);
             }
         }
     }
