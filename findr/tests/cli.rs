@@ -63,6 +63,39 @@ fn format_file_name(expected_file: &str) -> Cow<str> {
     expected_file.into()
 }
 
+#[test]
+#[cfg(not(windows))]
+fn unreadable_dir() -> TestResult {
+    use std::path::Path;
+
+    let dirname ="tests/inputs/cant-touch-this";
+    if !Path::new(dirname).exists() {
+        fs::create_dir(dirname)?;
+    }
+
+    std::process::Command::new("chmod")
+        .args(&["000", dirname])
+        .status()
+        .expect("failed");
+
+    let cmd = Command::cargo_bin(PRG)?
+        .arg("tests/inputs")
+        .assert()
+        .success();
+    fs::remove_dir(dirname)?;
+
+    let out = cmd.get_output();
+    let stdout = String::from_utf8(out.stdout.clone())?;
+    let lines = stdout.split("\n").collect::<Vec<_>>();
+
+    assert_eq!(lines.len(), 18);
+
+    let stderr = String::from_utf8(out.stderr.clone())?;
+    assert!(stderr.contains("cant-touch-this: Permission denied"));
+
+    Ok(())
+}
+
 fn run(args: &[&str], expected_file: &str) -> TestResult {
     let file = format_file_name(expected_file);
     let contents = fs::read_to_string(file.as_ref())?;
