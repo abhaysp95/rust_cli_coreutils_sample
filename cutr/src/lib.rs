@@ -77,7 +77,17 @@ pub fn parse_args() -> MyResult<Config> {
 
     let delim = match matches.get_one::<String>("delim") {
         // <-- gives Option<&char>, want Option<char>
-        Some(c) => Some(c.to_owned()),
+        Some(c) => {
+            if c.as_bytes().len() == 1 {
+                Some(c.to_owned())
+            } else {
+                cmd.error(
+                    clap::error::ErrorKind::InvalidValue,
+                    "Delimiter must be of single byte",
+                )
+                .exit();
+            }
+        }
         None => None,
     };
 
