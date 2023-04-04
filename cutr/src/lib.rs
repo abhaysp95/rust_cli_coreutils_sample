@@ -1,6 +1,7 @@
-use std::{error::Error, ops::Range, fmt::Error};
+use std::{error::Error, num::NonZeroUsize, ops::Range};
 
 use clap::{arg, command, ArgGroup};
+use regex::Regex;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 type ExtractRange = Vec<Range<usize>>;
@@ -19,22 +20,45 @@ pub enum ExtractCount {
     Fields(ExtractRange),
 }
 
+pub fn parse_index(input: &str) -> Result<usize, String> {
+    let err_str = || format!("illegal list value: \"{input}\"");
 
-fn parse_ranges(input: &str) -> MyResult<Range<usize>> {
-    let input = input.trim();
-    let valueError = format!("illegal list value: \"{}\"", input);
-    if input.chars().any(|c| !c.is_numeric()) {
-        return Err(valueError);
-    }
-
-    Ok(Range{
-    })
+    input
+        .starts_with("+")
+        .then(|| Err(err_str()))
+        .unwrap_or_else(|| {
+            input
+                .parse::<NonZeroUsize>()
+                .map(|n| usize::from(n) - 1)
+                .map_err(|_| err_str())
+        })
 }
 
-fn get_positions(input: &str) -> MyResult<Vec<Range<usize>>> {
-    let mut vec = vec![];
+fn get_positions(input: &str) -> MyResult<ExtractRange> {
+    let regex_str = Regex::new(r"^(\d+)-(\d+)$").unwrap();
 
-    Ok(vec)
+    input
+        .split(",")
+        .into_iter()
+        .map(|val| {
+            parse_index(val).map(|n| n..n + 1).or_else(|e| {
+                regex_str.captures(val).ok_or(e).and_then(|captures| {
+                    println!("captures: {:?}", captures);
+                    let n1 = parse_index(&captures[1])?;
+                    let n2 = parse_index(&captures[2])?;
+                    if n1 > n2 {
+                        return Err(format!(
+                            "first number in range ({}) must be lower than second number ({})",
+                            n1 + 1,
+                            n2 + 1
+                        ));
+                    }
+                    Ok(n1..n2 + 1)
+                })
+            })
+        })
+        .collect::<Result<_, _>>()
+        .map_err(From::from)
 }
 
 #[cfg(test)]
