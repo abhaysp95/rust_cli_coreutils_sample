@@ -13,7 +13,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 #[command(about = "wc clone for rust")]
 #[command(group(ArgGroup::new("bc_count").args(["chars", "bytes"])))]
 /// minimal wc clone for rust
-pub struct Config {
+pub struct ArgConfig {
     /// Provide filename(s)
     #[arg(action = ArgAction::Append)]
     files: Vec<String>,
@@ -31,8 +31,8 @@ pub struct Config {
     words: bool,
 }
 
-pub fn get_args() -> MyResult<Config> {
-    let mut cfg = Config::parse();
+pub fn get_args() -> MyResult<ArgConfig> {
+    let mut cfg = ArgConfig::parse();
 
     if cfg.files.is_empty() {
         cfg.files = vec!["-".to_string()];
@@ -50,7 +50,7 @@ pub fn get_args() -> MyResult<Config> {
     Ok(cfg)
 }
 
-pub fn run(cfg: Config) -> MyResult<()> {
+pub fn run(cfg: ArgConfig) -> MyResult<()> {
     let mut total_file_info = FileInfo::new();
     let mut file_infos: Vec<FileInfo> = Vec::new();
 
@@ -84,7 +84,7 @@ pub fn run(cfg: Config) -> MyResult<()> {
 pub fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
-        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
+        _ => Ok(Box::new(BufReader::new(File::open(Configfilename)?))),
     }
 }
 
@@ -149,7 +149,7 @@ fn count(mut buf: impl BufRead) -> MyResult<FileInfo> {
     Ok(file_info)
 }
 
-fn print_fileinfo(fileinfo: &FileInfo, filename: &str, cfg: &Config, pad: usize) {
+fn print_fileinfo(fileinfo: &FileInfo, filename: &str, cfg: &ArgConfig, pad: usize) {
     // println!("{:>8} {:>8} {:>8} {}", fileinfo.line_count, fileinfo.word_count, fileinfo.byte_count, filename);
 
     println!(
@@ -158,14 +158,22 @@ fn print_fileinfo(fileinfo: &FileInfo, filename: &str, cfg: &Config, pad: usize)
         format_field(&fileinfo.word_count, pad, cfg.words),
         format_field(&fileinfo.char_count, pad, cfg.chars),
         format_field(&fileinfo.byte_count, pad, cfg.bytes),
-        if "-" == filename { "".to_string() } else { format!(" {}", filename) }
+        if "-" == filename {
+            "".to_string()
+        } else {
+            format!(" {}", filename)
+        }
     );
     // res += format_field(&fileinfo.line_count, &pad, cfg.lines);
     // println!("{:>pad$} {:>pad$} {:>pad$} {}", fileinfo.line_count, fileinfo.word_count, fileinfo.byte_count, filename);
 }
 
 fn format_field(value: &usize, pad: usize, show: bool) -> String {
-    if show { format!("{:pad$}", value) } else { "".to_string() }
+    if show {
+        format!("{:pad$}", value)
+    } else {
+        "".to_string()
+    }
 }
 
 fn get_pad(bc: usize) -> usize {
