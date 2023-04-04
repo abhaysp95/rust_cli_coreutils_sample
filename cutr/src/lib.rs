@@ -9,7 +9,7 @@ type ExtractRange = Vec<Range<usize>>;
 #[derive(Debug)]
 pub struct Config {
     path: String,
-    delim: Option<char>,
+    delim: Option<String>,
     extract: ExtractCount,
 }
 
@@ -59,6 +59,59 @@ fn get_positions(input: &str) -> MyResult<ExtractRange> {
         })
         .collect::<Result<_, _>>()
         .map_err(From::from)
+}
+
+pub fn parse_args() -> MyResult<Config> {
+    let mut cmd = command!()
+        .arg(arg!(<Path>).default_value("-"))
+        .arg(arg!(-b --byte <Byte> "Select only these bytes"))
+        .arg(arg!(-c --char <Char> "Select only these chars"))
+        .arg(arg!(-f --field <Field> "Select only these fields"))
+        .group(
+            ArgGroup::new("Extract")
+                .required(true)
+                .args(["byte", "char", "field"]),
+        )
+        .arg(arg!(-d --delim <Delimeter> "Provide the delim char"));
+    let matches = cmd.get_matches_mut();
+
+    let delim = match matches.get_one::<String>("delim") {
+        // <-- gives Option<&char>, want Option<char>
+        Some(c) => Some(c.to_owned()),
+        None => None,
+    };
+
+    let range_to_extract = if let Some(fr) = matches.get_one::<String>("field") {
+        ExtractCount::Fields(get_positions(fr)?)
+    } else if let Some(br) = matches.get_one::<String>("byte") {
+        ExtractCount::Byte(get_positions(br)?)
+    } else if let Some(cr) = matches.get_one::<String>("char") {
+        ExtractCount::Char(get_positions(cr)?)
+    } else {
+        unreachable!();
+    };
+
+    let extract = match delim {
+        Some(_) => match range_to_extract {
+            ExtractCount::Fields(_) => range_to_extract,
+            _ => {
+                cmd.error( clap::error::ErrorKind::ArgumentConflict, "Delimiter can only be used with Fields").exit();
+            },
+        },
+        None => range_to_extract,
+    };
+
+    Ok(Config {
+        path: matches.get_one::<String>("Path").unwrap().to_owned(),
+        delim,
+        extract,
+    })
+}
+
+pub fn run(cfg: Config) -> MyResult<()> {
+    println!("{:#?}", &cfg);
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -154,58 +207,4 @@ mod unit_tests {
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![14..15, 18..20]);
     }
-}
-
-pub fn parse_args() -> MyResult<Config> {
-    let mut cmd = command!()
-        .arg(arg!(<Path>).default_value("-"))
-        .arg(arg!(-b --byte <Byte> "Select only these bytes"))
-        .arg(arg!(-c --char <Char> "Select only these chars"))
-        .arg(arg!(-f --field <Field> "Select only these fields").default_value(" "))
-        .group(
-            ArgGroup::new("Extract")
-                .required(true)
-                .args(["byte", "char", "field"]),
-        )
-        .arg(arg!(-d --delim <Delimeter> "Provide the delim char"));
-    let matches = cmd.get_matches_mut();
-
-    let delim = matches.get_one::<char>("delim"); // <-- gives Option<&char>, want Option<char>
-    let delim = match delim {
-        Some(c) => Some(c.to_owned()),
-        None => None,
-    };
-
-    let extract = if let Some(fr) = matches.get_one::<String>("field") {
-        match delim {
-            None => ExtractCount::Fields(get_positions(fr).unwrap()),
-            Some(_) => {
-                cmd.error(
-                    clap::error::ErrorKind::ArgumentConflict,
-                    "Delimiter can only be used with Fields",
-                )
-                .exit();
-            }
-        }
-    } else {
-        if let Some(br) = matches.get_one::<String>("byte") {
-            ExtractCount::Byte(get_positions(br).unwrap())
-        } else if let Some(cr) = matches.get_one::<String>("char") {
-            ExtractCount::Char(get_positions(cr).unwrap())
-        } else {
-            unreachable!()
-        }
-    };
-
-    Ok(Config {
-        path: matches.get_one::<String>("path").unwrap().to_string(),
-        delim,
-        extract,
-    })
-}
-
-pub fn run(cfg: Config) -> MyResult<()> {
-    println!("{:#?}", &cfg);
-
-    Ok(())
 }
