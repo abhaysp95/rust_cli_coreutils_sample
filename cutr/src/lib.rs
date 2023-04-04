@@ -105,8 +105,12 @@ pub fn parse_args() -> MyResult<Config> {
         Some(_) => match range_to_extract {
             ExtractCount::Fields(_) => range_to_extract,
             _ => {
-                cmd.error( clap::error::ErrorKind::ArgumentConflict, "Delimiter can only be used with Fields").exit();
-            },
+                cmd.error(
+                    clap::error::ErrorKind::ArgumentConflict,
+                    "Delimiter can only be used with Fields",
+                )
+                .exit();
+            }
         },
         None => range_to_extract,
     };
