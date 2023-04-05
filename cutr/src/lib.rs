@@ -1,4 +1,4 @@
-use std::{error::Error, num::NonZeroUsize, ops::Range};
+use std::{error::Error, fs::File, num::NonZeroUsize, ops::Range, path::PathBuf};
 
 use clap::{arg, command, ArgAction, ArgGroup};
 use regex::Regex;
@@ -46,7 +46,7 @@ fn get_positions(input: &str) -> MyResult<ExtractRange> {
                     println!("captures: {:?}", captures);
                     let n1 = parse_index(&captures[1])?;
                     let n2 = parse_index(&captures[2])?;
-                    if n1 > n2 {
+                    if n1 >= n2 {
                         return Err(format!(
                             "first number in range ({}) must be lower than second number ({})",
                             n1 + 1,
@@ -184,18 +184,18 @@ mod unit_tests {
         assert!(res.is_err());
         let res = get_positions("1-1-a");
         assert!(res.is_err());
-        // First number must be less than second
+        // first number must be less than second
         let res = get_positions("1-1");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "First number in range (1) must be lower than second number (1)"
+            "first number in range (1) must be lower than second number (1)"
         );
         let res = get_positions("2-1");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "First number in range (2) must be lower than second number (1)"
+            "first number in range (2) must be lower than second number (1)"
         );
         // All the following are acceptable
         let res = get_positions("1");
