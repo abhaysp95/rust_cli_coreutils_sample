@@ -1,6 +1,6 @@
 use std::{error::Error, num::NonZeroUsize, ops::Range};
 
-use clap::{arg, command, ArgGroup};
+use clap::{arg, command, ArgAction, ArgGroup};
 use regex::Regex;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -8,7 +8,7 @@ type ExtractRange = Vec<Range<usize>>;
 
 #[derive(Debug)]
 pub struct Config {
-    path: String,
+    path: Vec<PathBuf>,
     delim: Option<String>,
     extract: ExtractCount,
 }
@@ -63,7 +63,7 @@ fn get_positions(input: &str) -> MyResult<ExtractRange> {
 
 pub fn parse_args() -> MyResult<Config> {
     let mut cmd = command!()
-        .arg(arg!(<Path>).default_value("-"))
+        .arg(arg!(<Path>).default_value("-").action(ArgAction::Append))
         .arg(arg!(-b --byte <Byte> "Select only these bytes"))
         .arg(arg!(-c --char <Char> "Select only these chars"))
         .arg(arg!(-f --field <Field> "Select only these fields"))
@@ -116,7 +116,11 @@ pub fn parse_args() -> MyResult<Config> {
     };
 
     Ok(Config {
-        path: matches.get_one::<String>("Path").unwrap().to_owned(),
+        path: matches
+            .get_many::<String>("Path")
+            .unwrap()
+            .map(PathBuf::from)
+            .collect(),
         delim,
         extract,
     })
