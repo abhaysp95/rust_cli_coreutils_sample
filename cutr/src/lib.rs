@@ -1,4 +1,10 @@
-use std::{error::Error, fs::File, num::NonZeroUsize, ops::Range, path::PathBuf};
+use std::{
+    error::Error,
+    fs::File,
+    io::{self, BufRead, BufReader},
+   num::NonZeroUsize,
+    ops::Range,
+};
 
 use clap::{arg, command, ArgAction, ArgGroup};
 use regex::Regex;
@@ -74,6 +80,8 @@ pub fn parse_args() -> MyResult<Config> {
         .arg(arg!(-d --delim <Delimeter> "Provide the delim char"));
     let matches = cmd.get_matches_mut();
 
+    // TODO: add check for path too (if used)
+
     let delim = match matches.get_one::<String>("delim") {
         // <-- gives Option<&char>, want Option<char>
         Some(c) => {
@@ -137,14 +145,18 @@ pub fn run(cfg: Config) -> MyResult<()> {
                     match &cfg.extract {
                         ExtractCount::Char(rng) => {
                             println!("{}", extract_chars(&line, &rng));
-                        },
-                        ExtractCount::Byte(rng) => todo!(),
-                        ExtractCount::Fields(rng) => todo!(),
+                        }
+                        ExtractCount::Byte(rng) => {
+                            println!("{}", extract_bytes(&line, &rng));
+                        }
+                        ExtractCount::Fields(rng) => {
+                            let delim = &cfg.delim.unwrap().clone();
+                            println!("{}", extract_fields(&line, &delim, &rng));
+                        }
                     }
                 }
-            },
+            }
         }
-
     }
 
     Ok(())
@@ -154,14 +166,49 @@ fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
     let mut res = vec![];
     let line = line.char_indices().map(|(_, c)| c).collect::<Vec<_>>();
     for rng in ranges.into_iter().cloned() {
-        if let Some(val) = line.get(rng) {  // get() can take both single position and a range
-            for c in val {  // you can also iterator over rng and get the char one by one
+        if let Some(val) = line.get(rng) {
+            // get() can take both single position and a range
+            for c in val {
+                // you can also iterator over rng and get the char one by one
                 res.push(c);
             }
         }
     }
 
     res.into_iter().collect()
+}
+
+fn extract_bytes(line: &str, ranges: &[Range<usize>]) -> String {
+    let mut res = String::from("");
+
+    for rng in ranges {
+        res.push_str(&line[rng.start..rng.end]);
+    }
+
+    res
+}
+
+fn extract_fields(line: &str, delim: &str, ranges: &[Range<usize>]) -> String {
+    if 1 < delim.len() {
+        // cause delimiter is only of len 1 in linux+gnu/cut
+        todo!();
+    }
+
+    let dline = line
+        .split(delim)
+        .enumerate()
+        .filter(|&(i, _)| {
+            for rng in ranges {
+                if rng.start <= i && rng.end > i {
+                    return true;
+                }
+            }
+            return false;
+        })
+        .map(|(_, s)| s)
+        .collect::<Vec<&str>>();
+
+    dline.join(delim)
 }
 
 fn open(pathbuf: &str) -> MyResult<Box<dyn BufRead>> {
@@ -266,7 +313,7 @@ mod unit_tests {
     }
 
     #[test]
-   fn test_extract_chars() {
+    fn test_extract_chars() {
         assert_eq!(extract_chars("", &[0..1]), "".to_string());
         assert_eq!(extract_chars("ábc", &[0..1]), "á".to_string());
         assert_eq!(extract_chars("ábc", &[0..1, 2..3]), "ác".to_string());
