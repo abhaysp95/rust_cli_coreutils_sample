@@ -8,7 +8,7 @@ type ExtractRange = Vec<Range<usize>>;
 
 #[derive(Debug)]
 pub struct Config {
-    path: Vec<PathBuf>,
+    path: Vec<String>,
     delim: Option<String>,
     extract: ExtractCount,
 }
@@ -119,7 +119,7 @@ pub fn parse_args() -> MyResult<Config> {
         path: matches
             .get_many::<String>("Path")
             .unwrap()
-            .map(PathBuf::from)
+            .map(String::from)
             .collect(),
         delim,
         extract,
@@ -127,7 +127,19 @@ pub fn parse_args() -> MyResult<Config> {
 }
 
 pub fn run(cfg: Config) -> MyResult<()> {
-    println!("{:#?}", &cfg);
+    // println!("{:#?}", &cfg);
+
+    for filepath in &cfg.path {
+        if "-" == filepath {
+            let _file = Box::new(BufReader::new(io::stdin()));
+            // dbg!(&file);
+        }
+    }
+
+    /* if cfg.path != "-" {
+        let file = File::open(&cfg.path)?;
+        dbg!(&file);
+    } */
 
     Ok(())
 }
