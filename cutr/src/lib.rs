@@ -2,7 +2,7 @@ use std::{
     error::Error,
     fs::File,
     io::{self, BufRead, BufReader},
-   num::NonZeroUsize,
+    num::NonZeroUsize,
     ops::Range,
 };
 
@@ -148,11 +148,11 @@ pub fn run(cfg: Config) -> MyResult<()> {
                         }
                         ExtractCount::Byte(rng) => {
                             println!("{}", extract_bytes(&line, &rng));
-                        }
+                        },
                         ExtractCount::Fields(rng) => {
-                            let delim = &cfg.delim.unwrap().clone();
+                            let delim = &cfg.delim.clone().unwrap();
                             println!("{}", extract_fields(&line, &delim, &rng));
-                        }
+                        },
                     }
                 }
             }
@@ -189,24 +189,16 @@ fn extract_bytes(line: &str, ranges: &[Range<usize>]) -> String {
 }
 
 fn extract_fields(line: &str, delim: &str, ranges: &[Range<usize>]) -> String {
-    if 1 < delim.len() {
-        // cause delimiter is only of len 1 in linux+gnu/cut
+    if 1 < delim.len() {  // cause delimiter is only of len 1 in linux+gnu/cut
         todo!();
     }
 
-    let dline = line
-        .split(delim)
-        .enumerate()
-        .filter(|&(i, _)| {
-            for rng in ranges {
-                if rng.start <= i && rng.end > i {
-                    return true;
-                }
-            }
-            return false;
-        })
-        .map(|(_, s)| s)
-        .collect::<Vec<&str>>();
+    let dline = line.split(delim).enumerate().filter(|&(i, _)| {
+        for rng in ranges {
+            if rng.start <= i && rng.end > i { return true }
+        }
+        return false
+    }).map(|(_, s)| s).collect::<Vec<&str>>();
 
     dline.join(delim)
 }
@@ -313,7 +305,7 @@ mod unit_tests {
     }
 
     #[test]
-    fn test_extract_chars() {
+   fn test_extract_chars() {
         assert_eq!(extract_chars("", &[0..1]), "".to_string());
         assert_eq!(extract_chars("ábc", &[0..1]), "á".to_string());
         assert_eq!(extract_chars("ábc", &[0..1, 2..3]), "ác".to_string());
