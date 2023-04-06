@@ -135,10 +135,11 @@ pub fn run(cfg: Config) -> MyResult<()> {
                 for line in file.lines() {
                     let line = line?;
                     match &cfg.extract {
-                        ExtractCount::Byte(rng) => {
+                        ExtractCount::Char(rng) => {
                             println!("{}", extract_chars(&line, &rng));
                         },
-                        _ => unimplemented!(),
+                        ExtractCount::Byte(rng) => todo!(),
+                        ExtractCount::Fields(rng) => todo!(),
                     }
                 }
             },
@@ -150,12 +151,17 @@ pub fn run(cfg: Config) -> MyResult<()> {
 }
 
 fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
-    let mut res = String::from("");
-    for rng in ranges {
-        res.push_str(line[rng.start..rng.end].as_ref());
+    let mut res = vec![];
+    let line = line.char_indices().map(|(_, c)| c).collect::<Vec<_>>();
+    for rng in ranges.into_iter().cloned() {
+        if let Some(val) = line.get(rng) {  // get() can take both single position and a range
+            for c in val {  // you can also iterator over rng and get the char one by one
+                res.push(c);
+            }
+        }
     }
 
-    res
+    res.into_iter().collect()
 }
 
 fn open(pathbuf: &str) -> MyResult<Box<dyn BufRead>> {
