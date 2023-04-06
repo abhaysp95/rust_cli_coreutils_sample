@@ -150,7 +150,7 @@ pub fn run(cfg: Config) -> MyResult<()> {
                             println!("{}", extract_bytes(&line, &rng));
                         },
                         ExtractCount::Fields(rng) => {
-                            let delim = &cfg.delim.clone().unwrap();
+                            let delim = &cfg.delim.as_ref().unwrap();
                             println!("{}", extract_fields(&line, &delim, &rng));
                         },
                     }
