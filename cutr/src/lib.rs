@@ -129,18 +129,40 @@ pub fn run(cfg: Config) -> MyResult<()> {
     // println!("{:#?}", &cfg);
 
     for filepath in &cfg.path {
-        if "-" == filepath {
-            let _file = Box::new(BufReader::new(io::stdin()));
-            // dbg!(&file);
+        match open(&filepath) {
+            Err(err) => eprintln!("{}: {}", &filepath, err),
+            Ok(file) => {
+                for line in file.lines() {
+                    let line = line?;
+                    match &cfg.extract {
+                        ExtractCount::Byte(rng) => {
+                            println!("{}", extract_chars(&line, &rng));
+                        },
+                        _ => unimplemented!(),
+                    }
+                }
+            },
         }
+
     }
 
-    /* if cfg.path != "-" {
-        let file = File::open(&cfg.path)?;
-        dbg!(&file);
-    } */
-
     Ok(())
+}
+
+fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
+    let mut res = String::from("");
+    for rng in ranges {
+        res.push_str(line[rng.start..rng.end].as_ref());
+    }
+
+    res
+}
+
+fn open(pathbuf: &str) -> MyResult<Box<dyn BufRead>> {
+    match pathbuf {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(pathbuf)?))),
+    }
 }
 
 #[cfg(test)]
