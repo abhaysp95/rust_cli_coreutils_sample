@@ -38,8 +38,7 @@ fn get_positions(input: &str) -> MyResult<ExtractRange> {
     let regex_str = Regex::new(r"^(\d+)-(\d+)$").unwrap();
 
     input
-        .split(",")
-        .into_iter()
+        .split(',')
         .map(|val| {
             parse_index(val).map(|n| n..n + 1).or_else(|e| {
                 regex_str.captures(val).ok_or(e).and_then(|captures| {
