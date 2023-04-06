@@ -173,7 +173,7 @@ fn open(pathbuf: &str) -> MyResult<Box<dyn BufRead>> {
 
 #[cfg(test)]
 mod unit_tests {
-    use super::get_positions;
+    use super::*;
 
     #[test]
     fn get_ranges_test() {
@@ -263,5 +263,15 @@ mod unit_tests {
         let res = get_positions("15,19-20");
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![14..15, 18..20]);
+    }
+
+    #[test]
+   fn test_extract_chars() {
+        assert_eq!(extract_chars("", &[0..1]), "".to_string());
+        assert_eq!(extract_chars("ábc", &[0..1]), "á".to_string());
+        assert_eq!(extract_chars("ábc", &[0..1, 2..3]), "ác".to_string());
+        assert_eq!(extract_chars("ábc", &[0..3]), "ábc".to_string());
+        assert_eq!(extract_chars("ábc", &[2..3, 1..2]), "cb".to_string());
+        assert_eq!(extract_chars("ábc", &[0..1, 1..2, 4..5]), "áb".to_string());
     }
 }
