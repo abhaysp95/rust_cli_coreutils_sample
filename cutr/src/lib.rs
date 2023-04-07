@@ -163,16 +163,17 @@ pub fn run(cfg: Config) -> MyResult<()> {
 }
 
 fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
-    let mut res = vec![];
+    let mut res: Vec<char> = vec![];
     let line = line.char_indices().map(|(_, c)| c).collect::<Vec<_>>();
     for rng in ranges.into_iter().cloned() {
-        if let Some(val) = line.get(rng) {
+        res.extend(rng.filter_map(|r| line.get(r)));
+        /* if let Some(val) = line.get(rng) {
             // get() can take both single position and a range
             for c in val {
                 // you can also iterator over rng and get the char one by one
                 res.push(c);
             }
-        }
+        } */
     }
 
     res.into_iter().collect()
@@ -190,7 +191,7 @@ fn extract_bytes(line: &str, ranges: &[Range<usize>]) -> String {
 
 fn extract_fields(line: &str, delim: &str, ranges: &[Range<usize>]) -> String {
     if 1 < delim.len() {  // cause delimiter is only of len 1 in linux+gnu/cut
-        todo!();
+
     }
 
     let dline = line.split(delim).enumerate().filter(|&(i, _)| {
@@ -312,5 +313,15 @@ mod unit_tests {
         assert_eq!(extract_chars("ábc", &[0..3]), "ábc".to_string());
         assert_eq!(extract_chars("ábc", &[2..3, 1..2]), "cb".to_string());
         assert_eq!(extract_chars("ábc", &[0..1, 1..2, 4..5]), "áb".to_string());
+    }
+
+    #[test]
+    fn test_extract_bytes() {
+        assert_eq!(extract_bytes("ábc", &[0..1]), "�".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..2]), "á".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..3]), "áb".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..4]), "ábc".to_string());
+        assert_eq!(extract_bytes("ábc", &[3..4, 2..3]), "cb".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..2, 5..6]), "á".to_string());
     }
 }

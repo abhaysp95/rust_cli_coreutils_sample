@@ -30,13 +30,13 @@ fn gen_bad_file() -> String {
 #[test]
 fn skips_bad_file() -> TestResult {
     let bad_file = gen_bad_file();
-    let expected = format!("Permission denied");
+    let expected = format!(".* (os error 2).*");
 
     Command::cargo_bin(&PRG)?
         .args(&["-b", "1", CSV, &bad_file])
         .assert()
-        .failure()
-        .stderr(predicates::str::contains(expected));
+        .success()
+        .stderr(predicates::str::is_match(expected)?);
 
     Ok(())
 }
