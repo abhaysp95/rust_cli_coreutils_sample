@@ -163,7 +163,15 @@ pub fn run(cfg: Config) -> MyResult<()> {
 }
 
 fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
-    let mut res: Vec<char> = vec![];
+    let chars = line.chars().collect::<Vec<_>>();
+    ranges
+        .iter()
+        .cloned()
+        .map(|range| range.filter_map(|idx| chars.get(idx)))
+        .flatten()
+        .collect()
+
+    /* let mut res: Vec<char> = vec![];
     let line = line.chars().collect::<Vec<_>>();
     for rng in ranges.into_iter().cloned() {
         res.extend(rng.filter_map(|r| line.get(r)));
