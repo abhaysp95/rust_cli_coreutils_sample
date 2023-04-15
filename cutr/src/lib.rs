@@ -167,9 +167,9 @@ fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
     ranges
         .iter()
         .cloned()
-        .map(|range| range.filter_map(|idx| chars.get(idx)))
-        .flatten()
+        .flat_map(|range| range.filter_map(|idx| chars.get(idx)))
         .collect()
+
 
     /* let mut res: Vec<char> = vec![];
     let line = line.chars().collect::<Vec<_>>();
@@ -184,7 +184,7 @@ fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
         } */
     }
 
-    res.into_iter().collect()
+    res.into_iter().collect() */
 }
 
 fn extract_bytes(line: &str, ranges: &[Range<usize>]) -> String {
