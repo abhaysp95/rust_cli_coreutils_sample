@@ -188,13 +188,13 @@ fn extract_chars(line: &str, ranges: &[Range<usize>]) -> String {
 }
 
 fn extract_bytes(line: &str, ranges: &[Range<usize>]) -> String {
-    let mut res = String::from("");
-
-    for rng in ranges {
-        res.push_str(&line[rng.start..rng.end]);
-    }
-
-    res
+    let line_bytes = line.as_bytes();
+    let res_bytes = ranges
+        .iter()
+        .cloned()
+        .flat_map(|range| range.filter_map(|idx| line_bytes.get(idx)).copied())
+        .collect::<Vec<_>>();
+    String::from_utf8_lossy(&res_bytes).into_owned()
 }
 
 fn extract_fields(line: &str, delim: &str, ranges: &[Range<usize>]) -> String {
